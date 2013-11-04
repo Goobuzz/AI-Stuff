@@ -1,0 +1,51 @@
+define([
+	'lib/NodeList',
+	'goo/entities/components/Component'
+],
+function(
+	NodeList,
+	Component
+){
+	function AIComponent(){
+		this.type = "AIComponent";
+		this.behavior = new NodeList();
+	};
+	AIComponent.prototype = Object.create(Component.prototype);
+	AIComponent.prototype.addBehavior = function(b, priority){
+		var node = {
+			next:null,
+			previous:null,
+		};
+		for(var p in b){
+			if(b.hasOwnProperty(p)){
+				node[p] = b[p];
+			}
+		}
+		node.active = node.active || true;
+		node.blocking = node.blocking || false;
+		if(null == priority){
+			this.behavior.addFirst(node);
+		}
+		else{
+			node.pIndex = priority;
+			this.behavior.addSorted(node);
+		}
+		return;
+	};
+	AIComponent.prototype.doLogic = function(entity){
+		// n should have a 'logic' function which
+		// we pass in the entity, as well as the
+		// behavior node
+		var n = this.behavior.first;
+		while(n != null){
+			if(true == n.active){
+				n.logic(entity, n);
+				if(true == n.blocking){
+					return;
+				}
+			}
+			n = n.next;
+		}
+	};
+	return AIComponent;
+});
