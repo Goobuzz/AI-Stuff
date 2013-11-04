@@ -33,9 +33,6 @@ function(
 		return;
 	};
 	AIComponent.prototype.doLogic = function(entity){
-		// n should have a 'logic' function which
-		// we pass in the entity, as well as the
-		// behavior node
 		var n = this.behavior.first;
 		while(n != null){
 			if(true == n.active){
