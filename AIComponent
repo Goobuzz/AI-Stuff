@@ -1,14 +1,17 @@
 define([
 	'lib/NodeList',
-	'goo/entities/components/Component'
+	'goo/entities/components/Component',
+	'lib/Game'
 ],
 function(
 	NodeList,
-	Component
+	Component,
+	Game
 ){
-	function AIComponent(){
+	function AIComponent(entity){
 		this.type = "AIComponent";
-		this.behavior = new NodeList();
+		this.behavior = {};
+		this.entity = entity;
 	};
 	AIComponent.prototype = Object.create(Component.prototype);
 	AIComponent.prototype.addBehavior = function(b, priority){
@@ -23,20 +26,106 @@ function(
 		}
 		node.active = node.active || true;
 		node.blocking = node.blocking || false;
-		if(null == priority){
-			this.behavior.addFirst(node);
+		if(null != node.update){
+			if(null == this.behavior.update){
+				this.behavior.update = new NodeList();
+				Game.register("Update", this, this.update);
+			}
+			if(null == priority){
+				this.behavior.update.addFirst(node);
+			}
+			else{
+				node.priority = priority;
+				this.behavior.update.addSorted(node);
+			}
 		}
-		else{
-			node.pIndex = priority;
-			this.behavior.addSorted(node);
+		if(null != node.fixedUpdate){
+			if(null == this.behavior.fixedUpdate){
+				this.behavior.fixedUpdate = new NodeList();
+				Game.register("FixedUpdate", this, this.fixedUpdate);
+			}
+			if(null == priority){
+				this.behavior.fixedUpdate.addFirst(node);
+			}
+			else{
+				node.priority = priority;
+				this.behavior.fixedUpdate.addSorted(node);
+			}
 		}
+		if(null != node.renderUpdate){
+			if(null == this.behavior.renderUpdate){
+				this.behavior.renderUpdate = new NodeList();
+				Game.register("RenderUpdate", this, this.renderUpdate);
+			}
+			if(null == priority){
+				this.behavior.renderUpdate.addFirst(node);
+			}
+			else{
+				node.priority = priority;
+				this.behavior.renderUpdate.addSorted(node);
+			}
+		}
+		if(null != node.lateUpdate){
+			if(null == this.behavior.lateUdate){
+				this.behavior.lateUpdate = new NodeList();
+				Game.register("LateUpdate", this, this.lateUpdate);
+			}
+			if(null == priority){
+				this.behavior.lateUpdate.addFirst(node);
+			}
+			else{
+				node.priority = priority;
+				this.behavior.lateUpdate.addSorted(node);
+			}
+		}
+		
 		return;
 	};
-	AIComponent.prototype.doLogic = function(entity){
-		var n = this.behavior.first;
+	AIComponent.prototype.update = function(){
+		if(null == this.behavior.update){return;}
+		var n = this.behavior.update.first;
 		while(n != null){
 			if(true == n.active){
-				n.logic(entity, n);
+				n.update(this.entity, n);
+				if(true == n.blocking){
+					return;
+				}
+			}
+			n = n.next;
+		}
+	};
+	AIComponent.prototype.fixedUpdate = function(){
+		if(null == this.behavior.fixedUpdate){return;}
+		var n = this.behavior.fixedUpdate.first;
+		while(n != null){
+			if(true == n.active){
+				n.fixedUpdate(this.entity, n);
+				if(true == n.blocking){
+					return;
+				}
+			}
+			n = n.next;
+		}
+	};
+	AIComponent.prototype.renderUpdate = function(){
+		if(null == this.behavior.renderUpdate){return;}
+		var n = this.behavior.renderUpdate.first;
+		while(n != null){
+			if(true == n.active){
+				n.renderUpdate(this.entity, n);
+				if(true == n.blocking){
+					return;
+				}
+			}
+			n = n.next;
+		}
+	};
+	AIComponent.prototype.lateUpdate = function(){
+		if(null == this.behavior.lateUpdate){return;}
+		var n = this.behavior.lateUpdate.first;
+		while(n != null){
+			if(true == n.active){
+				n.lateUpdate(this.entity, n);
 				if(true == n.blocking){
 					return;
 				}
